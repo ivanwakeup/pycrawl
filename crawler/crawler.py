@@ -12,7 +12,6 @@ from google import google
 
 def google_for_urls(term, limit=100):
     search_results = google.search(term, pages=5, lang='en')
-    li = [x.link for x in search_results]
     links = []
     for x in range(0, limit):
         if len(search_results) > x:

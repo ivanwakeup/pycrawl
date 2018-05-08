@@ -19,15 +19,15 @@ def google_for_urls(term, limit=100):
     return links
 
 
-def crawl(urls):
-    blacklist = UrlBlacklist(list(urls))
-    urls = deque(blacklist.remove_blacklisted())
+def crawl(links):
+    blacklist = UrlBlacklist(list(links))
+    links = deque(blacklist.remove_blacklisted())
 
     processed_urls = set()
     emails = set()
 
-    while len(urls):
-        url1 = urls.pop()
+    while len(links):
+        url1 = links.pop()
         # add to processed immediately, to support failure
         processed_urls.add(url1)
 
@@ -66,18 +66,18 @@ def crawl(urls):
                 link = path + link
 
             # add the new url to the queue if it was not enqueued nor processed yet
-            if link not in urls and link not in processed_urls:
+            if link not in links and link not in processed_urls:
                 if not blacklist.is_blacklisted(link):
-                    urls.append(link)
+                    links.append(link)
 
         # scrub linkset to ensure crawler doesn't waste time on one site
         # urls = scrub_linkset(urls)
-        urls_list = list(urls)
+        urls_list = list(links)
         scrubbed = scrub(urls_list, 4)
         print("*****SCRUBBED RESULT********\n\n\n")
         print(scrubbed)
         print("*****SCRUBBED RESULT END********\n\n\n")
-        urls = deque(scrubbed)
+        links = deque(scrubbed)
 
     return emails
 
@@ -88,8 +88,8 @@ if __name__ == "__main__":
     crawl_urls = deque()
     for url in urls:
         crawl_urls.append(url)
-    emails = crawl(crawl_urls)
-    print(emails)
+    emails_out = crawl(crawl_urls)
+    print(emails_out)
 
     '''links = ['http://this.com', 'http://this.com/that', 'http://this.com/this', 'http:guy.com']
     linkq = deque()

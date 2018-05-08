@@ -1,12 +1,9 @@
 from bs4 import BeautifulSoup
 import requests
 import requests.exceptions
-import urllib
 from urlparse import urlparse
 from collections import deque
 import re
-import argparse
-import os
 import sys
 from util import UrlBlacklist
 from linkscrub import scrub
@@ -70,7 +67,7 @@ def crawl(urls):
                 link = path + link
 
             # add the new url to the queue if it was not enqueued nor processed yet
-            if not link in urls and not link in processed_urls:
+            if link not in urls and link not in processed_urls:
                 if not blacklist.is_blacklisted(link):
                     urls.append(link)
 

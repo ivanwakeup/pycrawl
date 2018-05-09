@@ -16,7 +16,8 @@ def google_for_urls(term, limit=100):
     for x in range(0, limit):
         if len(search_results) > x:
             links.append(search_results[x].link)
-    return links
+    out = list(reversed(links))
+    return out
 
 
 def crawl(links):
@@ -68,7 +69,7 @@ def crawl(links):
             # add the new url to the queue if it was not enqueued nor processed yet
             if link not in links and link not in processed_urls:
                 if not blacklist.is_blacklisted(link):
-                    links.append(link)
+                    links.appendleft(link)
 
         # scrub linkset to ensure crawler doesn't waste time on one site
         # urls = scrub_linkset(urls)

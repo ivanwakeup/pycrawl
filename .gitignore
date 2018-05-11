@@ -1,2 +1,3 @@
 .idea*
 *emails.txt*
+*.pyc*

@@ -46,7 +46,7 @@ def crawl(links):
 
         # extract all email addresses and add them into the resulting set
         new_emails = set(re.findall(
-            r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.[a-z]+", response.text, re.I))
+            r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.com", response.text, re.I))
         # emails.update(new_emails)
         f = open('emails.txt', 'a')
         for email in new_emails:

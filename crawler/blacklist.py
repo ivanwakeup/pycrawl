@@ -46,7 +46,7 @@ class UrlBlacklist(Blacklist):
 
 
 class EmailBlacklist(Blacklist):
-    blacklist = ['example', 'email']
+    blacklist = ['example', 'email', 'support']
 
     def __init__(self, scrub_list):
         super(EmailBlacklist, self).__init__(scrub_list, self.blacklist)

@@ -5,7 +5,7 @@ from urlparse import urlparse
 from collections import deque
 import re
 import sys
-from util import UrlBlacklist
+from blacklist import UrlBlacklist
 from linkscrub import scrub
 from google import google
 

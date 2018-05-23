@@ -56,6 +56,8 @@ def crawl(links):
         new_emails = set(re.findall(
             r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.com", response.text, re.I))
 
+        email_blacklist = Blacklist.factory("email", new_emails)
+        new_emails = set(email_blacklist.remove_blacklisted())
         gmails = get_gmail_address_set(new_emails)
 
         f = open('emails.txt', 'a')

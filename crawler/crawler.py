@@ -20,6 +20,14 @@ def google_for_urls(term, limit=100):
     return out
 
 
+def get_gmail_address_set(emails):
+    out = set()
+    for email in emails:
+        if "gmail" in email:
+            out.add(email)
+    return out
+
+
 def crawl(links):
     blacklist = UrlBlacklist(list(links))
     links = deque(blacklist.remove_blacklisted())
@@ -47,11 +55,20 @@ def crawl(links):
         # extract all email addresses and add them into the resulting set
         new_emails = set(re.findall(
             r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.com", response.text, re.I))
-        # emails.update(new_emails)
+
+        gmails = get_gmail_address_set(new_emails)
+
         f = open('emails.txt', 'a')
+        f2 = open('gmail_emails.txt', 'a')
+
         for email in new_emails:
             f.write("%s\n" % email)
+
+        for email in gmails:
+            f2.write("%s\n" % email)
+
         f.close()
+        f2.close()
 
         # create a beutiful soup for the html document
         soup = BeautifulSoup(response.text, "html.parser")

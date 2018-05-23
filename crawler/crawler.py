@@ -5,7 +5,7 @@ from urlparse import urlparse
 from collections import deque
 import re
 import sys
-from blacklist import UrlBlacklist
+from blacklist import Blacklist
 from linkscrub import scrub
 from google import google
 
@@ -29,7 +29,7 @@ def get_gmail_address_set(emails):
 
 
 def crawl(links):
-    blacklist = UrlBlacklist(list(links))
+    blacklist = Blacklist.factory("url", list(links))
     links = deque(blacklist.remove_blacklisted())
 
     processed_urls = set()

@@ -27,6 +27,13 @@ def get_gmail_address_set(emails):
             out.add(email)
     return out
 
+def get_valid_urls_from_page(anchors):
+    partial_links = []
+    for anchor in anchors:
+        link = anchor.attrs["href"] if "href" in anchor.attrs else ''
+        partial_links.append(link)
+    return partial_links
+
 
 def crawl(links):
     blacklist = Blacklist.factory("url", list(links))

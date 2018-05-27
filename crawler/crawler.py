@@ -43,18 +43,18 @@ def get_url_extras(url):
     return url, base_url, path
 
 
-def find_emails_from_url(url):
+def get_url_response(url):
     print("Processing %s" % url)
     try:
         response = requests.get(url)
     except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError):
-        response = None
+        response = requests.Response()
+    return response
 
-    if response is not None:
-        emails = set(re.findall(
-            r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.com", response.text, re.I))
-    else:
-        emails = set()
+
+def get_email_set_from_response(url_response):
+    emails = set(re.findall(
+        r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.com", url_response.text, re.I))
     return emails
 
 
@@ -74,21 +74,13 @@ def crawl(links):
         # add to processed immediately, to support failure
         processed_urls.add(url1)
 
-        parts = urlparse(url1)
-        base_url = "{0.scheme}://{0.netloc}".format(parts)
-        path = url1[:url1.rfind('/') + 1] if '/' in parts.path else url1
+        url_extras = get_url_extras(url1)
 
-        # get url's content
-        print("Processing %s" % url1)
-        try:
-            response = requests.get(url1)
-        except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError):
-            # ignore pages with errors
+        response = get_url_response(url1)
+        if not response.ok:
             continue
 
-        # extract all email addresses and add them into the resulting set
-        new_emails = set(re.findall(
-            r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.com", response.text, re.I))
+        new_emails = get_email_set_from_response(response)
 
         email_blacklist = Blacklist.factory("email", new_emails)
         new_emails = set(email_blacklist.remove_blacklisted())
@@ -115,9 +107,9 @@ def crawl(links):
             link = anchor.attrs["href"] if "href" in anchor.attrs else ''
             # resolve relative links
             if link.startswith('/'):
-                link = base_url + link
+                link = url_extras[1] + link
             elif not link.startswith('http'):
-                link = path + link
+                link = url_extras[2] + link
 
             # add the new url to the queue if it was not enqueued nor processed yet
             if link not in links_to_process and link not in processed_urls:

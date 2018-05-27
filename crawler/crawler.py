@@ -27,6 +27,7 @@ def get_gmail_address_set(emails):
             out.add(email)
     return out
 
+
 def get_valid_urls_from_page(anchors):
     partial_links = []
     for anchor in anchors:
@@ -35,15 +36,41 @@ def get_valid_urls_from_page(anchors):
     return partial_links
 
 
+def get_url_extras(url):
+    parts = urlparse(url)
+    base_url = "{0.scheme}://{0.netloc}".format(parts)
+    path = url[:url.rfind('/') + 1] if '/' in parts.path else url
+    return url, base_url, path
+
+
+def find_emails_from_url(url):
+    print("Processing %s" % url)
+    try:
+        response = requests.get(url)
+    except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError):
+        response = None
+
+    if response is not None:
+        emails = set(re.findall(
+            r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.com", response.text, re.I))
+    else:
+        emails = set()
+    return emails
+
+
+def process_url():
+    return
+
+
 def crawl(links):
     blacklist = Blacklist.factory("url", list(links))
-    links = deque(blacklist.remove_blacklisted())
+    links_to_process = deque(blacklist.remove_blacklisted())
 
     processed_urls = set()
     emails = set()
 
-    while len(links):
-        url1 = links.pop()
+    while len(links_to_process):
+        url1 = links_to_process.pop()
         # add to processed immediately, to support failure
         processed_urls.add(url1)
 
@@ -79,7 +106,7 @@ def crawl(links):
         f.close()
         f2.close()
 
-        # create a beutiful soup for the html document
+        # create a beautiful soup for the html document
         soup = BeautifulSoup(response.text, "html.parser")
 
         # find and process all the anchors in the document
@@ -93,18 +120,18 @@ def crawl(links):
                 link = path + link
 
             # add the new url to the queue if it was not enqueued nor processed yet
-            if link not in links and link not in processed_urls:
+            if link not in links_to_process and link not in processed_urls:
                 if not blacklist.is_blacklisted(link):
-                    links.appendleft(link)
+                    links_to_process.appendleft(link)
 
         # scrub linkset to ensure crawler doesn't waste time on one site
         # urls = scrub_linkset(urls)
-        urls_list = list(links)
+        urls_list = list(links_to_process)
         scrubbed = scrub(urls_list, 4)
         print("*****SCRUBBED RESULT********\n\n\n")
         print(scrubbed)
         print("*****SCRUBBED RESULT END********\n\n\n")
-        links = deque(scrubbed)
+        links_to_process = deque(scrubbed)
 
     return emails
 

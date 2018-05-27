@@ -1,12 +1,4 @@
-import requests, bs4, re
-from urlparse import urlparse
+class CrawlerUrl(object):
 
-
-def make_soup(url):
-    r = requests.get(url)
-    soup = bs4.BeatifulSoup(r.text, "html.parser")
-    return soup
-
-
-if __name__ == "__main__:":
-    print make_soup(
+    def __init__(self):
+        self.base_u

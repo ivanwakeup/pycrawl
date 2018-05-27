@@ -1,4 +1,5 @@
 from os.path import expanduser
+from blacklist import Blacklist
 
 
 class EmailWriter(object):
@@ -12,18 +13,26 @@ class EmailWriter(object):
 
     __should_write = False
 
-    def __init__(self):
-        pass
+    def __init__(self, blacklist):
+        self.blacklist = blacklist
 
     def add_email(self, email):
         self.__check_should_write()
-        self.__emails.add(email)
+        if not self.blacklist.is_blacklisted(email):
+            self.__emails.add(email)
+
+    def add_emails(self, emails):
+        self.__check_should_write()
+        if emails:
+            for email in emails:
+                if not self.blacklist.is_blacklisted(email):
+                    self.__emails.add(email)
 
     def __check_should_write(self):
-        if self.should_write:
+        if self.__should_write:
             self.write()
         elif len(self.__emails) > 10:
-            self.should_write = True
+            self.__should_write = True
 
     def __sort_emails_into_tiers(self):
         for email in self.__emails:
@@ -38,20 +47,25 @@ class EmailWriter(object):
             return True
 
     def __write_tier_1(self):
-        for filename, emails in self.__tier_1_emails:
-            f = open(filename, 'a')
-            for email in emails:
-                f.write("%s\n" % email)
-            f.close()
+        filename, emails = self.__tier_1_emails
+        f = open(filename, 'a')
+        for email in emails:
+            f.write("%s\n" % email)
+        f.close()
 
     def __write_tier_2(self):
-        for filename, emails in self.__tier_2_emails:
-            f = open(filename, 'a')
-            for email in emails:
-                f.write("%s\n" % email)
-            f.close()
+        filename, emails = self.__tier_2_emails
+        f = open(filename, 'a')
+        for email in emails:
+            f.write("%s\n" % email)
+        f.close()
+
+    def __empty_email_sets(self):
+        self.__tier_1_emails = ('{}/tier_1_emails.txt'.format(self.__homedir), set())
+        self.__tier_2_emails = ('{}/tier_2_emails.txt'.format(self.__homedir), set())
 
     def write(self):
         self.__sort_emails_into_tiers()
         self.__write_tier_1()
         self.__write_tier_2()
+        self.__empty_email_sets()

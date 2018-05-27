@@ -1,6 +1,7 @@
 class Blacklist(object):
-    def __init__(self, scrub_list, scrub_words):
-        self.scrub_list = scrub_list
+    def __init__(self, scrub_words, scrub_list=None):
+        if scrub_list is not None:
+            self.scrub_list = scrub_list
         self.scrub_words = scrub_words
 
     def is_blacklisted(self, url):
@@ -14,7 +15,7 @@ class Blacklist(object):
     def remove_blacklisted(self):
         return [x for x in self.scrub_list if not self.is_blacklisted(x)]
 
-    def factory(type, scrub_list):
+    def factory(type, scrub_list=None):
         if type == "url":
             return UrlBlacklist(scrub_list)
         if type == "ext":
@@ -42,18 +43,18 @@ class UrlBlacklist(Blacklist):
                  'aboutads.info']
 
     def __init__(self, scrub_list):
-        super(UrlBlacklist, self).__init__(scrub_list, self.blacklist)
+        super(UrlBlacklist, self).__init__(self.blacklist, scrub_list)
 
 
 class EmailBlacklist(Blacklist):
     blacklist = ['example', 'email', 'support']
 
-    def __init__(self, scrub_list):
-        super(EmailBlacklist, self).__init__(scrub_list, self.blacklist)
+    def __init__(self, scrub_list=None):
+        super(EmailBlacklist, self).__init__(self.blacklist, scrub_list)
 
 
 class ExtensionBlacklist(Blacklist):
     blacklist = ['.jpg', '.png', '.jpeg', '.mp3']
 
     def __init__(self, scrub_list):
-        super(ExtensionBlacklist, self).__init__(scrub_list, self.blacklist)
+        super(ExtensionBlacklist, self).__init__(self.blacklist, scrub_list)

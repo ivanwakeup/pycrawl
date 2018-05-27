@@ -8,6 +8,7 @@ import sys
 from blacklist import Blacklist
 from linkscrub import scrub
 from google import google
+from writer import EmailWriter
 
 
 def google_for_urls(term, limit=100):
@@ -65,7 +66,7 @@ def process_url():
 def crawl(links):
     blacklist = Blacklist.factory("url", list(links))
     links_to_process = deque(blacklist.remove_blacklisted())
-
+    email_writer = EmailWriter(blacklist)
     processed_urls = set()
     emails = set()
 
@@ -82,21 +83,23 @@ def crawl(links):
 
         new_emails = get_email_set_from_response(response)
 
-        email_blacklist = Blacklist.factory("email", new_emails)
-        new_emails = set(email_blacklist.remove_blacklisted())
-        gmails = get_gmail_address_set(new_emails)
+        # email_blacklist = Blacklist.factory("email", new_emails)
+        # new_emails = set(email_blacklist.remove_blacklisted())
+        # gmails = get_gmail_address_set(new_emails)
+        #
+        # f = open('emails.txt', 'a')
+        # f2 = open('gmail_emails.txt', 'a')
+        #
+        # for email in new_emails:
+        #     f.write("%s\n" % email)
+        #
+        # for email in gmails:
+        #     f2.write("%s\n" % email)
+        #
+        # f.close()
+        # f2.close()
 
-        f = open('emails.txt', 'a')
-        f2 = open('gmail_emails.txt', 'a')
-
-        for email in new_emails:
-            f.write("%s\n" % email)
-
-        for email in gmails:
-            f2.write("%s\n" % email)
-
-        f.close()
-        f2.close()
+        email_writer.add_emails(new_emails)
 
         # create a beautiful soup for the html document
         soup = BeautifulSoup(response.text, "html.parser")

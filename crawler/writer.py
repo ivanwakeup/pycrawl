@@ -1,9 +1,14 @@
+from os.path import expanduser
+
+
 class EmailWriter(object):
 
     __emails = set()
 
-    __tier_1_emails = ('tier_1_emails.txt', set())
-    __tier_2_emails = ('tier_2_emails.txt', set())
+    __homedir = expanduser("~")
+
+    __tier_1_emails = ('{}/tier_1_emails.txt'.format(__homedir), set())
+    __tier_2_emails = ('{}/tier_2_emails.txt'.format(__homedir), set())
 
     __should_write = False
 

@@ -47,8 +47,8 @@ def get_url_extras(url):
 def get_url_response(url):
     print("Processing %s" % url)
     try:
-        response = requests.get(url)
-    except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError):
+        response = requests.get(url, timeout=3)
+    except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
         response = requests.Response()
     return response
 
@@ -66,7 +66,8 @@ def process_url():
 def crawl(links):
     blacklist = Blacklist.factory("url", list(links))
     links_to_process = deque(blacklist.remove_blacklisted())
-    email_writer = EmailWriter(blacklist)
+    email_blacklist = Blacklist.factory("email")
+    email_writer = EmailWriter(email_blacklist)
     processed_urls = set()
     emails = set()
 

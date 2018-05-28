@@ -13,7 +13,7 @@ class EmailWriter(object):
 
     __should_write = False
 
-    def __init__(self, blacklist):
+    def __init__(self, blacklist=None):
         self.blacklist = blacklist
 
     def add_email(self, email):
@@ -25,7 +25,10 @@ class EmailWriter(object):
         self.__check_should_write()
         if emails:
             for email in emails:
-                if not self.blacklist.is_blacklisted(email):
+                if self.blacklist:
+                    if not self.blacklist.is_blacklisted(email):
+                        self.__emails.add(email)
+                else:
                     self.__emails.add(email)
 
     def __check_should_write(self):
@@ -43,7 +46,7 @@ class EmailWriter(object):
 
     @staticmethod
     def is_tier_1(email):
-        if "gmail" or "yahoo" in email:
+        if "gmail" in email:
             return True
 
     def __write_tier_1(self):
@@ -63,9 +66,11 @@ class EmailWriter(object):
     def __empty_email_sets(self):
         self.__tier_1_emails = ('{}/tier_1_emails.txt'.format(self.__homedir), set())
         self.__tier_2_emails = ('{}/tier_2_emails.txt'.format(self.__homedir), set())
+        self.__emails = set()
 
     def write(self):
         self.__sort_emails_into_tiers()
         self.__write_tier_1()
         self.__write_tier_2()
         self.__empty_email_sets()
+        self.__should_write = False

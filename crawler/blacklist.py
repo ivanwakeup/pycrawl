@@ -47,14 +47,14 @@ class UrlBlacklist(Blacklist):
 
 
 class EmailBlacklist(Blacklist):
-    blacklist = ['example', 'email', 'support']
+    blacklist = ['example', 'email', 'support', 'domain']
 
     def __init__(self, scrub_list=None):
         super(EmailBlacklist, self).__init__(self.blacklist, scrub_list)
 
 
 class ExtensionBlacklist(Blacklist):
-    blacklist = ['.jpg', '.png', '.jpeg', '.mp3']
+    blacklist = ['.jpg', '.png', '.jpeg', '.mp3', '.tgz']
 
     def __init__(self, scrub_list):
         super(ExtensionBlacklist, self).__init__(self.blacklist, scrub_list)

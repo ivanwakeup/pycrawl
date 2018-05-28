@@ -11,6 +11,7 @@ from google import google
 from writer import EmailWriter
 import logging
 
+
 def google_for_urls(term, limit=100):
     search_results = google.search(term, pages=5, lang='en')
     links = []
@@ -48,7 +49,10 @@ def get_url_response(url):
     print("Processing %s" % url)
     try:
         response = requests.get(url, timeout=3)
-    except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
+    except (requests.exceptions.MissingSchema,
+            requests.exceptions.ConnectionError,
+            requests.exceptions.ReadTimeout,
+            requests.exceptions.InvalidURL):
         response = requests.Response()
     return response
 
@@ -119,17 +123,24 @@ def crawl(links):
 
 if __name__ == "__main__":
 
-    urls = google_for_urls(sys.argv[1])
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Crawl the web for emails')
+    parser.add_argument('--url', help='The seed url to begin crawling from.')
+    parser.add_argument('--term', help='A google search term to start with.')
+
+    args = parser.parse_args()
+    urls = None
+    if args.url:
+        urls = [args.url]
+    elif args.term:
+        urls = google_for_urls(args.term)
+
     crawl_urls = deque()
     for url in urls:
         crawl_urls.append(url)
     emails_out = crawl(crawl_urls)
-    print(emails_out)
 
-    '''links = ['http://this.com', 'http://this.com/that', 'http://this.com/this', 'http:guy.com']
-    linkq = deque()
-    for url in links:
-        linkq.append(url)
-    print linkq
-    stuff = scrub_linkset(linkq, 2)
-    print(stuff)'''
+
+
+

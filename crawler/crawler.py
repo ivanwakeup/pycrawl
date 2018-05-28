@@ -9,7 +9,7 @@ from blacklist import Blacklist
 from linkscrub import scrub
 from google import google
 from writer import EmailWriter
-
+import logging
 
 def google_for_urls(term, limit=100):
     search_results = google.search(term, pages=5, lang='en')
@@ -64,12 +64,15 @@ def process_url():
 
 
 def crawl(links):
+
     blacklist = Blacklist.factory("url", list(links))
     links_to_process = deque(blacklist.remove_blacklisted())
     email_blacklist = Blacklist.factory("email")
     email_writer = EmailWriter(email_blacklist)
     processed_urls = set()
     emails = set()
+
+    logger = logging.getLogger()
 
     while len(links_to_process):
         url1 = links_to_process.pop()
@@ -83,22 +86,6 @@ def crawl(links):
             continue
 
         new_emails = get_email_set_from_response(response)
-
-        # email_blacklist = Blacklist.factory("email", new_emails)
-        # new_emails = set(email_blacklist.remove_blacklisted())
-        # gmails = get_gmail_address_set(new_emails)
-        #
-        # f = open('emails.txt', 'a')
-        # f2 = open('gmail_emails.txt', 'a')
-        #
-        # for email in new_emails:
-        #     f.write("%s\n" % email)
-        #
-        # for email in gmails:
-        #     f2.write("%s\n" % email)
-        #
-        # f.close()
-        # f2.close()
 
         email_writer.add_emails(new_emails)
 
@@ -124,9 +111,7 @@ def crawl(links):
         # urls = scrub_linkset(urls)
         urls_list = list(links_to_process)
         scrubbed = scrub(urls_list, 4)
-        print("*****SCRUBBED RESULT********\n\n\n")
-        print(scrubbed)
-        print("*****SCRUBBED RESULT END********\n\n\n")
+        logger.debug(scrubbed)
         links_to_process = deque(scrubbed)
 
     return emails

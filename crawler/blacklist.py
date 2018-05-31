@@ -1,5 +1,5 @@
 class Blacklist(object):
-    def __init__(self, scrub_words, scrub_list=None):
+    def __init__(self, scrub_words=None, scrub_list=None):
         if scrub_list is not None:
             self.scrub_list = scrub_list
         self.scrub_words = scrub_words
@@ -47,7 +47,7 @@ class UrlBlacklist(Blacklist):
 
 
 class EmailBlacklist(Blacklist):
-    blacklist = ['example', 'email', 'support', 'domain', 'orders', 'info', 'github', 'registration', 'mozilla', 'donate', 'feedback']
+    blacklist = ['example', 'email', 'support', 'domain', 'orders', 'info', 'github', 'registration', 'mozilla', 'donate', 'feedback', 'newsletter']
 
     def __init__(self, scrub_list=None):
         super(EmailBlacklist, self).__init__(self.blacklist, scrub_list)

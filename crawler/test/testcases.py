@@ -1,21 +1,23 @@
 import unittest
+from crawler.blacklist import Blacklist
 
-from crawler.crawler import get_email_set_from_response
-from requests import Response
 
 class TestCrawler(unittest.TestCase):
 
     def test_google_for_urls(self):
         pass
 
-    def test_find_emails_from_url(self):
-        response = Response("<html><body>hookit.co@gmail.com</body></html>")
-        emails = get_email_set_from_response(response)
-        print(emails)
-        self.assertEquals(emails, set([u'hookit.co@gmail.com']))
+    def test_blacklist(self):
+        blacklist = Blacklist(scrub_words=['info'])
+        self.assertTrue(blacklist.is_blacklisted("info@dudeman.com"))
+        blacklist = Blacklist(scrub_words=['guy'])
+        self.assertTrue(blacklist.is_blacklisted("guy@dudeman.com"))
+        blacklist = Blacklist(scrub_words=['something'])
+        self.assertFalse(blacklist.is_blacklisted("notsome@dudeman.com"))
 
-    def test_get_url_response(self):
-        url = 'http://slcm.us/18athleteguide'
-        response
+    def test_email_blacklist(self):
+        blacklist = Blacklist.factory("email")
+        self.assertTrue(blacklist.is_blacklisted("info@dudeman.com"))
+        self.assertFalse(blacklist.is_blacklisted("guy@dudeman.com"))
 
 

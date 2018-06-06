@@ -1,15 +1,16 @@
-from bs4 import BeautifulSoup
+import logging
+import re
+from collections import deque
+from urlparse import urlparse
+
 import requests
 import requests.exceptions
-from urlparse import urlparse
-from collections import deque
-import re
-import sys
+from bs4 import BeautifulSoup
+from google import google
+
 from blacklist import Blacklist
 from linkscrub import scrub
-from google import google
 from writer import EmailWriter
-import logging
 
 
 def google_for_urls(term, limit=100):
@@ -49,10 +50,7 @@ def get_url_response(url):
     print("Processing %s" % url)
     try:
         response = requests.get(url, timeout=3)
-    except (requests.exceptions.MissingSchema,
-            requests.exceptions.ConnectionError,
-            requests.exceptions.ReadTimeout,
-            requests.exceptions.InvalidURL):
+    except requests.exceptions.RequestException:
         response = requests.Response()
     return response
 
@@ -68,10 +66,11 @@ def process_url():
 
 
 def crawl(links):
-
     blacklist = Blacklist.factory("url", list(links))
     links_to_process = deque(blacklist.remove_blacklisted())
-    email_blacklist = Blacklist.factory("email")
+    email_blacklist = Blacklist(
+        scrub_words=['example', 'email', 'support', 'domain', 'orders', 'info', 'github', 'registration', 'mozilla',
+                     'donate', 'feedback', 'newsletter'])
     email_writer = EmailWriter(email_blacklist)
     processed_urls = set()
     emails = set()
@@ -94,7 +93,10 @@ def crawl(links):
         email_writer.add_emails(new_emails)
 
         # create a beautiful soup for the html document
-        soup = BeautifulSoup(response.text, "html.parser")
+        try:
+            soup = BeautifulSoup(response.text, "html.parser")
+        except Exception:
+            continue
 
         # find and process all the anchors in the document
         for anchor in soup.find_all("a"):
@@ -140,7 +142,3 @@ if __name__ == "__main__":
     for url in urls:
         crawl_urls.append(url)
     emails_out = crawl(crawl_urls)
-
-
-
-

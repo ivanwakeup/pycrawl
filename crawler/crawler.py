@@ -93,10 +93,8 @@ def crawl(links):
         email_writer.add_emails(new_emails)
 
         # create a beautiful soup for the html document
-        try:
-            soup = BeautifulSoup(response.text, "html.parser")
-        except Exception:
-            continue
+
+        soup = BeautifulSoup(response.text, "html.parser")
 
         # find and process all the anchors in the document
         for anchor in soup.find_all("a"):

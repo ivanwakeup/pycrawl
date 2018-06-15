@@ -11,6 +11,7 @@ from google import google
 from blacklist import Blacklist
 from linkscrub import scrub
 from writer import EmailWriter
+from timeout import timeout, TimeoutError
 
 
 def google_for_urls(term, limit=100):
@@ -41,7 +42,10 @@ def get_valid_urls_from_page(anchors):
 
 def get_url_extras(url):
     parts = urlparse(url)
-    base_url = "{0.scheme}://{0.netloc}".format(parts)
+    try:
+        base_url = "{0.scheme}://{0.netloc}".format(parts)
+    except UnicodeEncodeError:
+        base_url = None
     path = url[:url.rfind('/') + 1] if '/' in parts.path else url
     return url, base_url, path
 
@@ -54,7 +58,7 @@ def get_url_response(url):
         response = requests.Response()
     return response
 
-
+@timeout(seconds=2)
 def get_email_set_from_response(url_response):
     emails = set(re.findall(
         r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.com", url_response.text, re.I))
@@ -70,7 +74,7 @@ def crawl(links):
     links_to_process = deque(blacklist.remove_blacklisted())
     email_blacklist = Blacklist(
         scrub_words=['example', 'email', 'support', 'domain', 'orders', 'info', 'github', 'registration', 'mozilla',
-                     'donate', 'feedback', 'newsletter'])
+                     'donate', 'feedback', 'newsletter', 'name'])
     email_writer = EmailWriter(email_blacklist)
     processed_urls = set()
     emails = set()
@@ -88,7 +92,10 @@ def crawl(links):
         if not response.ok:
             continue
 
-        new_emails = get_email_set_from_response(response)
+        try:
+            new_emails = get_email_set_from_response(response)
+        except TimeoutError:
+            continue
 
         email_writer.add_emails(new_emails)
 

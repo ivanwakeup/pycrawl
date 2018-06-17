@@ -46,7 +46,7 @@ class EmailWriter(object):
 
     @staticmethod
     def is_tier_1(email):
-        tier1 = ["gmail", "yahoo", "hotmail"]
+        tier1 = ["gmail", "yahoo", "hotmail", "aol"]
         for tier in tier1:
             if tier in email:
                 return True

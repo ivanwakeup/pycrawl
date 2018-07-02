@@ -1,8 +1,11 @@
 from urlparse import urlparse
+import logging
+
+logger = logging.getLogger()
 
 
 def scrub(links, base_occurences=10):
-    print("LINKS: {}\n\n").format(links)
+    logger.debug("LINKS: {}\n\n".format(links))
 
     urlp = []
     for link in links:
@@ -10,7 +13,7 @@ def scrub(links, base_occurences=10):
             lp = urlparse(link)
             urlp.append(lp)
         except:
-            print("BLEW UP ON: {}".format(link))
+            logger.debug("BLEW UP ON: {}".format(link))
             continue
 
     urls_base = [x.scheme + "://" + x.netloc for x in urlp]
@@ -19,11 +22,11 @@ def scrub(links, base_occurences=10):
 
     base_and_count = zip(urls_base, base_count)
 
-    print("BASECOUNT: {}\n\n").format(base_and_count)
+    logger.debug("BASECOUNT: {}\n\n".format(base_and_count))
 
     full_base_count = zip(urls_full, base_and_count)
 
-    print("FULLBASE: {}\n\n").format(full_base_count)
+    logger.debug("FULLBASE: {}\n\n".format(full_base_count))
 
     new_linklist = []
     for item in full_base_count:

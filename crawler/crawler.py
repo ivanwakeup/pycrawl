@@ -1,13 +1,17 @@
-from bs4 import BeautifulSoup
+import logging
+import re
+from collections import deque
+from urlparse import urlparse
+
 import requests
 import requests.exceptions
-from urlparse import urlparse
-from collections import deque
-import re
-import sys
-from util import UrlBlacklist
-from linkscrub import scrub
+from bs4 import BeautifulSoup
 from google import google
+
+from blacklist import Blacklist
+from linkscrub import scrub
+from writer import EmailWriter
+from timeout import timeout, TimeoutError
 
 
 def google_for_urls(term, limit=100):
@@ -28,49 +32,75 @@ def get_gmail_address_set(emails):
     return out
 
 
-def crawl(links):
-    blacklist = UrlBlacklist(list(links))
-    links = deque(blacklist.remove_blacklisted())
+def get_valid_urls_from_page(anchors):
+    partial_links = []
+    for anchor in anchors:
+        link = anchor.attrs["href"] if "href" in anchor.attrs else ''
+        partial_links.append(link)
+    return partial_links
 
+
+def get_url_extras(url):
+    parts = urlparse(url)
+    try:
+        base_url = "{0.scheme}://{0.netloc}".format(parts)
+    except UnicodeEncodeError:
+        base_url = None
+    path = url[:url.rfind('/') + 1] if '/' in parts.path else url
+    return url, base_url, path
+
+
+def get_url_response(url):
+    print("Processing %s" % url)
+    try:
+        response = requests.get(url, timeout=3)
+    except requests.exceptions.RequestException:
+        response = requests.Response()
+    return response
+
+@timeout(seconds=2)
+def get_email_set_from_response(url_response):
+    emails = set(re.findall(
+        r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.com", url_response.text, re.I))
+    return emails
+
+
+def process_url():
+    return
+
+
+def crawl(links):
+    blacklist = Blacklist.factory("url", list(links))
+    links_to_process = deque(blacklist.remove_blacklisted())
+    email_blacklist = Blacklist(
+        scrub_words=['example', 'email', 'support', 'domain', 'orders', 'info', 'github', 'registration', 'mozilla',
+                     'donate', 'feedback', 'newsletter', 'name'])
+    email_writer = EmailWriter(email_blacklist)
     processed_urls = set()
     emails = set()
 
-    while len(links):
-        url1 = links.pop()
+    logger = logging.getLogger()
+
+    while len(links_to_process):
+        url1 = links_to_process.pop()
         # add to processed immediately, to support failure
         processed_urls.add(url1)
 
-        parts = urlparse(url1)
-        base_url = "{0.scheme}://{0.netloc}".format(parts)
-        path = url1[:url1.rfind('/') + 1] if '/' in parts.path else url1
+        url_extras = get_url_extras(url1)
 
-        # get url's content
-        print("Processing %s" % url1)
-        try:
-            response = requests.get(url1)
-        except (requests.exceptions.MissingSchema, requests.exceptions.ConnectionError):
-            # ignore pages with errors
+        response = get_url_response(url1)
+        if not response.ok:
             continue
 
-        # extract all email addresses and add them into the resulting set
-        new_emails = set(re.findall(
-            r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.com", response.text, re.I))
+        try:
+            new_emails = get_email_set_from_response(response)
+        except TimeoutError:
+            continue
 
-        gmails = get_gmail_address_set(new_emails)
+        email_writer.add_emails(new_emails)
 
-        f = open('emails.txt', 'a')
-        f2 = open('gmail_emails.txt', 'a')
+        # create a beautiful soup for the html document
 
-        for email in new_emails:
-            f.write("%s\n" % email)
-
-        for email in gmails:
-            f2.write("%s\n" % email)
-
-        f.close()
-        f2.close()
-
-        # create a beutiful soup for the html document
         soup = BeautifulSoup(response.text, "html.parser")
 
         # find and process all the anchors in the document
@@ -79,40 +109,41 @@ def crawl(links):
             link = anchor.attrs["href"] if "href" in anchor.attrs else ''
             # resolve relative links
             if link.startswith('/'):
-                link = base_url + link
+                link = url_extras[1] + link
             elif not link.startswith('http'):
-                link = path + link
+                link = url_extras[2] + link
 
             # add the new url to the queue if it was not enqueued nor processed yet
-            if link not in links and link not in processed_urls:
+            if link not in links_to_process and link not in processed_urls:
                 if not blacklist.is_blacklisted(link):
-                    links.appendleft(link)
+                    links_to_process.appendleft(link)
 
         # scrub linkset to ensure crawler doesn't waste time on one site
         # urls = scrub_linkset(urls)
-        urls_list = list(links)
+        urls_list = list(links_to_process)
         scrubbed = scrub(urls_list, 4)
-        print("*****SCRUBBED RESULT********\n\n\n")
-        print(scrubbed)
-        print("*****SCRUBBED RESULT END********\n\n\n")
-        links = deque(scrubbed)
+        logger.debug(scrubbed)
+        links_to_process = deque(scrubbed)
 
     return emails
 
 
 if __name__ == "__main__":
 
-    urls = google_for_urls(sys.argv[1])
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Crawl the web for emails')
+    parser.add_argument('--url', help='The seed url to begin crawling from.')
+    parser.add_argument('--term', help='A google search term to start with.')
+
+    args = parser.parse_args()
+    urls = None
+    if args.url:
+        urls = [args.url]
+    elif args.term:
+        urls = google_for_urls(args.term)
+
     crawl_urls = deque()
     for url in urls:
         crawl_urls.append(url)
     emails_out = crawl(crawl_urls)
-    print(emails_out)
-
-    '''links = ['http://this.com', 'http://this.com/that', 'http://this.com/this', 'http:guy.com']
-    linkq = deque()
-    for url in links:
-        linkq.append(url)
-    print linkq
-    stuff = scrub_linkset(linkq, 2)
-    print(stuff)'''

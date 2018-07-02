@@ -22,5 +22,3 @@ def is_one_edit(word1, word2):
 
 print(is_one_edit("this", "athis"))
 
-
-
